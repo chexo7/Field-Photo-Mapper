@@ -1,14 +1,14 @@
-# Field Photo Mapper Web
+# Field Photo Mapper Web — Perfect Development Roadmap
 
-**Field Photo Mapper Web** is a browser-based field-mapping application designed as a **Progressive Web App (PWA)**. The app supports field photo collection, map-based navigation, KMZ/KML overlays, GPS position tracking, and photo metadata storage.
+**Field Photo Mapper Web** is a browser-based field-mapping application designed as a **Progressive Web App (PWA)**. The app supports field photo collection, map-based navigation, KML/KMZ overlays, GPS position tracking, photo metadata storage, and export workflows.
 
-The updated development path is now focused on a **webapp first**, instead of a native Android app.
+This README is written as a **module-by-module development roadmap**. Each module is designed to be built independently, tested independently, committed independently, and integrated only after the acceptance criteria are met.
 
 ---
 
-## 1. Project Purpose
+## 1. Product Vision
 
-The purpose of Field Photo Mapper Web is to support field inspections by allowing the user to:
+Field Photo Mapper Web should allow a field user to:
 
 - Open a map in a browser or installed PWA.
 - Use **OpenStreetMap** as the default free basemap.
@@ -18,98 +18,86 @@ The purpose of Field Photo Mapper Web is to support field inspections by allowin
 - Read current GPS position.
 - Take photos using the device camera where supported by the browser.
 - Select existing images from the device.
-- Store every photo with complete metadata.
+- Store every photo with full metadata.
 - Save photo location using decimal latitude/longitude.
 - Capture heading/orientation when browser/device support allows it.
 - Allow manual heading correction after capture.
 - Display field photos as map markers with optional direction arrows.
 - Store data locally for field use.
-- Build the application in independent modules so each feature can be developed and tested step by step.
+- Export data for office review.
 
 ---
 
-## 2. Updated Technology Stack
+## 2. Development Philosophy
 
-### Frontend Framework
+The app must be developed using the following principles:
 
-- **React**
-- **TypeScript**
-- **Vite**
+1. **Build vertically, not horizontally.**  
+   Each milestone should produce a usable field workflow, not just disconnected components.
 
-React and TypeScript will provide a modular structure for pages, components, services, and models. Vite will provide a fast local development environment.
+2. **One module per commit group.**  
+   A module should be completed, tested, and committed before starting the next module.
 
-### Map Engine
+3. **Keep map, storage, camera, and export logic separated.**  
+   Pages should call services. Pages should not contain business logic.
 
-- **Leaflet**
+4. **Keep the MVP small.**  
+   The first goal is not a perfect app. The first goal is one reliable field workflow.
 
-Leaflet will be used as the primary web map engine because it is lightweight, widely supported, and works well with OpenStreetMap, markers, polylines, polygons, and GeoJSON overlays.
+5. **Always preserve raw data.**  
+   Never overwrite original GPS, timestamp, automatic heading, or source file information. Corrections should be stored separately.
 
-### Default Basemap
+6. **Field reliability comes first.**  
+   The app should handle denied permissions, missing GPS, weak internet, unsupported sensors, and browser differences gracefully.
 
-- **OpenStreetMap**
-
-OpenStreetMap will be the default basemap for the MVP because it can be used without requiring a Google API key.
-
-### Optional Satellite Basemap
-
-- **Google Satellite**
-- Enabled only if a valid API key is provided by the user.
-
-The app should keep OpenStreetMap as the default and make Google Satellite optional through the Settings page.
-
-### KML/KMZ Processing
-
-Recommended libraries:
-
-- **JSZip** for reading KMZ files as ZIP archives.
-- **@tmcw/togeojson** for converting KML to GeoJSON.
-
-Alternative:
-
-- **leaflet-kmz** if a direct Leaflet KMZ loader is preferred.
-
-### Local Storage
-
-- **IndexedDB**
-
-IndexedDB will store projects, imported features, photo metadata, app settings, and references to stored image blobs.
-
-Recommended wrapper:
-
-- **Dexie.js**
-
-Dexie.js simplifies IndexedDB access and makes local database code easier to maintain.
-
-### Camera and Images
-
-- Browser camera access using `getUserMedia()` where supported.
-- File input using `input type="file"` for selecting existing images.
-- Optional image capture through mobile browser file input using `capture="environment"`.
-
-### GPS Location
-
-- Browser Geolocation API.
-
-### Heading / Orientation
-
-- Browser DeviceOrientation APIs where available.
-- Manual heading correction is required because browser-based heading support varies by browser and device.
-
-### PWA Support
-
-- Web App Manifest.
-- Service Worker.
-- Offline shell caching.
-- Local data persistence using IndexedDB.
+7. **Use decimal latitude/longitude first.**  
+   State Plane, UTM, and other coordinate systems can be added later.
 
 ---
 
-## 3. App Architecture
+## 3. Technology Stack
 
-Recommended structure:
+### Frontend
+
+- React
+- TypeScript
+- Vite
+
+### Map
+
+- Leaflet
+- React Leaflet
+- OpenStreetMap default basemap
+- Google Satellite optional basemap if API key exists
+
+### KML/KMZ
+
+- JSZip for KMZ extraction
+- `@tmcw/togeojson` for KML to GeoJSON conversion
+
+### Local Database
+
+- IndexedDB
+- Dexie.js wrapper
+
+### Browser APIs
+
+- Geolocation API
+- Media Capture / file input APIs
+- DeviceOrientation API where supported
+
+### PWA
+
+- Web App Manifest
+- Service Worker
+- Optional `vite-plugin-pwa`
+
+---
+
+## 4. Recommended Repository Structure
 
 ```text
-FieldPhotoMapperWeb/
+field-photo-mapper-web/
 │
 ├── public/
 │   ├── manifest.webmanifest
@@ -139,7 +127,8 @@ FieldPhotoMapperWeb/
 │   │   ├── FeatureLayer.tsx
 │   │   ├── PhotoCapture.tsx
 │   │   ├── PhotoMetadataPanel.tsx
-│   │   └── HeadingEditor.tsx
+│   │   ├── HeadingEditor.tsx
+│   │   └── AppLayout.tsx
 │   │
 │   ├── models/
 │   │   ├── Project.ts
@@ -185,9 +174,44 @@ FieldPhotoMapperWeb/
 
 ---
 
-## 4. Development Roadmap
+## 5. Branching and Commit Strategy
 
-The app should be developed in independent modules. Each module should be completed and tested before starting the next one.
+Use a simple structure:
+
+```text
+main
+└── dev
+    ├── feature/module-00-project-setup
+    ├── feature/module-01-leaflet-map
+    ├── feature/module-02-settings
+    └── ...
+```
+
+### Commit Style
+
+Use clear commits:
+
+```text
+feat(map): add OpenStreetMap Leaflet basemap
+feat(location): add current GPS marker
+feat(photo): add photo capture input
+fix(map): correct mobile map height
+refactor(storage): isolate IndexedDB access
+```
+
+### Module Completion Rule
+
+A module is not complete until:
+
+- It builds without TypeScript errors.
+- It works on desktop browser.
+- It is tested on Android Chrome or Edge if device APIs are involved.
+- Acceptance criteria are met.
+- Known limitations are documented.
+
+---
+
+# 6. Module-by-Module Roadmap
 
 ---
 
@@ -195,18 +219,53 @@ The app should be developed in independent modules. Each module should be comple
 
 ## Goal
 
-Create the base React + TypeScript + Vite project and confirm that the webapp runs locally.
+Create the base React + TypeScript + Vite project and prepare the app structure for modular development.
 
-## Tasks
+## Why This Module Matters
 
-- Create the Vite React TypeScript project.
-- Install initial dependencies.
-- Set up folder structure.
-- Create placeholder pages.
-- Add basic routing.
-- Confirm the app runs locally.
+This module defines the foundation. If the folder structure, routing, TypeScript configuration, and app layout are messy, every later module becomes harder.
 
-## Initial Pages
+## Development Steps
+
+### Step 0.1 — Create the Vite App
+
+```bash
+npm create vite@latest field-photo-mapper-web -- --template react-ts
+cd field-photo-mapper-web
+npm install
+npm run dev
+```
+
+### Step 0.2 — Clean the Starter App
+
+Remove unnecessary starter content:
+
+```text
+src/assets/react.svg
+src/App.css default demo content
+src/App.tsx demo counter
+```
+
+Keep the app minimal.
+
+### Step 0.3 — Create Folder Structure
+
+Create:
+
+```text
+src/app
+src/pages
+src/components
+src/models
+src/services
+src/db
+src/utils
+src/styles
+```
+
+### Step 0.4 — Add Placeholder Pages
+
+Create placeholder pages:
 
 ```text
 HomePage
@@ -218,16 +277,62 @@ SettingsPage
 ProjectPage
 ```
 
+Each page should initially render only:
+
+```text
+Page title
+Short purpose
+Navigation back/home if needed
+```
+
+### Step 0.5 — Add Routing
+
+Install router:
+
+```bash
+npm install react-router-dom
+```
+
+Create routes for all placeholder pages.
+
+### Step 0.6 — Add App Layout
+
+Create `AppLayout.tsx` with:
+
+```text
+Header
+Main content area
+Simple navigation links
+Mobile-friendly spacing
+```
+
+Do not spend too much time on design yet.
+
+## Optimal Development Notes
+
+- Do not install Leaflet yet.
+- Do not install Dexie yet.
+- Keep this module focused on structure and navigation only.
+- Avoid over-designing CSS at this stage.
+- Make the app easy to inspect on mobile browser.
+
 ## Deliverable
 
-A running local webapp with basic navigation.
+A clean Vite React TypeScript app with page navigation and project structure.
 
 ## Acceptance Criteria
 
 - App runs with `npm run dev`.
-- User can open the app in the browser.
-- User can navigate between placeholder pages.
-- Project folder structure is ready for modular development.
+- No TypeScript errors.
+- User can navigate to all placeholder pages.
+- Folder structure matches the roadmap.
+- The app works on desktop browser and mobile browser over local network if tested.
+
+## Suggested Commit
+
+```text
+feat(app): initialize React TypeScript Vite project structure
+```
 
 ---
 
@@ -237,25 +342,84 @@ A running local webapp with basic navigation.
 
 Add a Leaflet map using OpenStreetMap as the default basemap.
 
-## Tasks
+## Why This Module Matters
 
-- Install Leaflet and React Leaflet.
-- Add Leaflet CSS.
-- Create `MapView` component.
-- Add OpenStreetMap tile layer.
-- Center the map on a default location.
-- Enable zoom and pan.
+The map is the center of the app. All future data layers—photos, GPS, KML/KMZ features, direction arrows—will depend on a stable map component.
+
+## Development Steps
+
+### Step 1.1 — Install Dependencies
+
+```bash
+npm install leaflet react-leaflet
+npm install -D @types/leaflet
+```
+
+### Step 1.2 — Import Leaflet CSS
+
+Import Leaflet CSS once, preferably in `main.tsx` or a global CSS file.
+
+### Step 1.3 — Create `MapView.tsx`
+
+The component should accept props later, but initially it only needs:
+
+```text
+center latitude
+center longitude
+zoom level
+OpenStreetMap tile layer
+```
+
+### Step 1.4 — Fix Map Height
+
+Leaflet maps do not display correctly unless the container has a defined height.
+
+Create `map.css` with rules for:
+
+```text
+map page wrapper
+map container
+mobile viewport height
+```
+
+### Step 1.5 — Add Map to `MapPage`
+
+`MapPage` should render:
+
+```text
+Page title or toolbar
+MapView
+```
+
+### Step 1.6 — Default Map Center
+
+Use a default center appropriate for testing. This can later be replaced by project location or GPS location.
+
+## Optimal Development Notes
+
+- Do not add GPS in this module.
+- Do not add basemap switching in this module.
+- Do not add photo markers yet.
+- Keep the map component reusable.
+- Avoid hardcoding everything inside `MapPage`; keep map setup inside `MapView`.
 
 ## Deliverable
 
-A working map page with OpenStreetMap.
+A working Leaflet map with OpenStreetMap.
 
 ## Acceptance Criteria
 
 - Map loads on `MapPage`.
 - User can pan and zoom.
-- OpenStreetMap is the default basemap.
-- Map takes the full available screen height on mobile.
+- OpenStreetMap is visible.
+- Map height works on desktop and mobile.
+- No console errors related to missing Leaflet assets.
+
+## Suggested Commit
+
+```text
+feat(map): add Leaflet OpenStreetMap basemap
+```
 
 ---
 
@@ -264,6 +428,10 @@ A working map page with OpenStreetMap.
 ## Goal
 
 Create a settings system to store user preferences locally.
+
+## Why This Module Matters
+
+Settings must exist before adding Google Satellite, heading toggles, and user preferences. The app should not rely on hardcoded values long-term.
 
 ## Initial Settings
 
@@ -275,7 +443,7 @@ EnableHeadingCapture
 SavePhotosLocally
 ```
 
-## Required Defaults
+## Defaults
 
 ```text
 DefaultBasemap = OpenStreetMap
@@ -285,26 +453,81 @@ SavePhotosLocally = true
 GoogleApiKey = empty
 ```
 
-## Tasks
+## Development Steps
 
-- Create `AppSettings` model.
-- Create `settingsService.ts`.
-- Create `SettingsPage`.
-- Add input for Google API key.
-- Add default basemap selector.
-- Add heading capture toggle.
-- Store settings in IndexedDB or local storage.
+### Step 2.1 — Create `AppSettings` Model
+
+Create a TypeScript interface with the settings above.
+
+### Step 2.2 — Create `settingsService.ts`
+
+Start simple. Use `localStorage` first if desired. Later, settings can be moved into IndexedDB.
+
+The service should support:
+
+```text
+getSettings
+saveSettings
+resetSettings
+getDefaultSettings
+```
+
+### Step 2.3 — Create `SettingsPage`
+
+Add fields for:
+
+```text
+Google API key
+Default basemap
+Enable heading capture
+Save photos locally
+Coordinate display format
+```
+
+### Step 2.4 — Add Validation
+
+Validation rules:
+
+```text
+Google API key can be empty
+Default basemap must be valid
+Coordinate format initially only supports Decimal Lat/Lon
+```
+
+### Step 2.5 — Persist and Reload
+
+After saving settings:
+
+```text
+Refresh page
+Confirm values remain
+Reset values
+Confirm defaults return
+```
+
+## Optimal Development Notes
+
+- Start with localStorage for speed.
+- Move to IndexedDB in Module 6 if needed.
+- Do not validate whether Google API key actually works yet.
+- Do not load Google Satellite yet.
 
 ## Deliverable
 
-A functional settings page.
+Functional settings page.
 
 ## Acceptance Criteria
 
-- Settings persist after page refresh.
-- Google API key can be added, edited, and removed.
-- OpenStreetMap remains default unless user changes it.
-- Google Satellite remains disabled if no API key exists.
+- Settings persist after refresh.
+- Google API key can be saved, edited, and cleared.
+- OpenStreetMap remains default unless changed.
+- Invalid basemap values cannot break the app.
+
+## Suggested Commit
+
+```text
+feat(settings): add persistent app settings
+```
 
 ---
 
@@ -314,6 +537,10 @@ A functional settings page.
 
 Allow the user to switch between OpenStreetMap and Google Satellite when a Google API key exists.
 
+## Why This Module Matters
+
+The basemap must be independent from overlays. Switching from OpenStreetMap to Google Satellite should not remove photo markers, GPS location, or imported features.
+
 ## Basemap Options
 
 ```text
@@ -321,25 +548,84 @@ OpenStreetMap
 Google Satellite, if API key exists
 ```
 
-## Tasks
+## Development Steps
 
-- Create `BasemapSwitcher` component.
-- Create `basemapService.ts`.
-- Keep OpenStreetMap available by default.
-- Detect whether Google API key exists.
-- Disable Google Satellite when no API key is configured.
-- Preserve overlays when switching basemaps.
+### Step 3.1 — Create Basemap Types
+
+Create a type or enum:
+
+```text
+openstreetmap
+google-satellite
+```
+
+### Step 3.2 — Create `basemapService.ts`
+
+The service should:
+
+```text
+return available basemaps
+check if Google Satellite is enabled
+return tile/source configuration
+```
+
+### Step 3.3 — Create `BasemapSwitcher.tsx`
+
+The component should:
+
+```text
+show current basemap
+allow switching
+show disabled Google option if no API key exists
+explain that Google Satellite requires API key
+```
+
+### Step 3.4 — Preserve Overlay Layers
+
+Basemap should be rendered as one layer group. Overlays should be separate:
+
+```text
+Basemap layer
+Feature overlays
+Photo overlays
+GPS overlay
+```
+
+### Step 3.5 — Implement Google Satellite Carefully
+
+For the MVP, choose one implementation approach and document limitations:
+
+```text
+Option A: use an approved Google Maps JavaScript API integration
+Option B: defer actual Google Satellite rendering and keep API key/settings ready
+```
+
+Because Google basemap terms and integration methods matter, do not rely on unofficial tile URLs for a production workflow.
+
+## Optimal Development Notes
+
+- Keep OpenStreetMap fully functional without Google.
+- Do not block the app if Google API key is missing.
+- Treat Google Satellite as optional enhancement.
+- Add clear UI feedback if Google Satellite is unavailable.
 
 ## Deliverable
 
-A working basemap selector.
+Basemap selector with OpenStreetMap default and Google Satellite option gated by API key.
 
 ## Acceptance Criteria
 
 - OpenStreetMap works without API key.
 - Google Satellite option is disabled when API key is empty.
-- Google Satellite option is enabled when API key exists.
-- Switching basemap does not remove photo markers or imported features.
+- Google Satellite option becomes available when API key exists.
+- Switching basemaps does not remove overlays.
+- Missing/invalid Google API key does not crash the app.
+
+## Suggested Commit
+
+```text
+feat(map): add basemap switcher with Google satellite option
+```
 
 ---
 
@@ -349,49 +635,84 @@ A working basemap selector.
 
 Read and display the current GPS position on the map.
 
-## Tasks
+## Why This Module Matters
 
-- Create `locationService.ts`.
-- Request browser location permission.
-- Get current position.
-- Watch position if user enables live tracking.
-- Display current position marker on map.
-- Store latest position in app state.
+Field photos are only valuable if location capture is reliable. GPS must be tested early on real mobile hardware.
 
-## Location Metadata
+## Development Steps
 
-```text
-Latitude
-Longitude
-Altitude
-Accuracy
-AltitudeAccuracy
-Heading
-Speed
-Timestamp
-```
+### Step 4.1 — Create `locationService.ts`
 
-## Coordinate Format
-
-Use decimal latitude/longitude.
-
-Example:
+The service should support:
 
 ```text
-Latitude: 39.952583
-Longitude: -75.165222
+isGeolocationSupported
+getCurrentPosition
+watchPosition
+clearWatch
 ```
+
+### Step 4.2 — Handle Permissions
+
+Handle these cases:
+
+```text
+Permission granted
+Permission denied
+Position unavailable
+Timeout
+Browser does not support geolocation
+```
+
+### Step 4.3 — Create `CurrentLocationMarker.tsx`
+
+Show:
+
+```text
+current position marker
+accuracy circle if accuracy exists
+last updated timestamp
+```
+
+### Step 4.4 — Add GPS Button to Map
+
+Add buttons:
+
+```text
+Locate me
+Start live tracking
+Stop live tracking
+```
+
+### Step 4.5 — Store Last Known Position in State
+
+Do not store every watch update in database yet. Save only current app state in this module.
+
+## Optimal Development Notes
+
+- Test on actual Android Chrome early.
+- Use a timeout to avoid hanging location requests.
+- Show accuracy in feet/meters if useful later.
+- Do not auto-request GPS on page load unless necessary; user action is better.
+- Gracefully handle denied permissions.
 
 ## Deliverable
 
-Current GPS location shown on the map.
+GPS current location displayed on the map.
 
 ## Acceptance Criteria
 
 - Browser requests location permission.
 - Current location appears on the map.
-- Accuracy is displayed when available.
-- User can refresh current location.
+- Accuracy circle appears when available.
+- User can refresh location.
+- Denied permission shows a clear message.
+
+## Suggested Commit
+
+```text
+feat(location): add GPS location marker and tracking controls
+```
 
 ---
 
@@ -401,37 +722,82 @@ Current GPS location shown on the map.
 
 Allow the user to take a photo or select an existing image.
 
-## Tasks
+## Why This Module Matters
 
-- Create `photoService.ts`.
-- Create `PhotoCapture` component.
-- Add button for camera capture.
-- Add button for existing image selection.
-- Support mobile browser capture where possible.
-- Preview the selected image.
-- Prepare image for local storage.
+Photo collection is the core field operation. The first version should prioritize reliability over advanced camera features.
 
-## Required Photo Actions
+## Development Steps
+
+### Step 5.1 — Create `photoService.ts`
+
+The service should handle:
 
 ```text
-Take Photo
-Select Existing Image
-Preview Photo
-Delete Photo
-Add Note
-Save Photo
+file validation
+image preview URL creation
+image metadata reading where possible
+thumbnail generation later
 ```
+
+### Step 5.2 — Create `PhotoCapture.tsx`
+
+Add controls:
+
+```text
+Take photo
+Select existing image
+Preview selected image
+Cancel
+Save draft
+```
+
+### Step 5.3 — Use File Input First
+
+Start with:
+
+```text
+input type="file"
+accept="image/*"
+capture="environment"
+```
+
+This is simpler and more mobile-friendly than building a custom live camera view first.
+
+### Step 5.4 — Add Optional `getUserMedia()` Later
+
+Only add live camera preview if the file input approach is insufficient.
+
+### Step 5.5 — Attach Current GPS Data
+
+When the user saves the photo, attach current GPS state if available.
+
+If no GPS exists, save the photo but flag location as missing.
+
+## Optimal Development Notes
+
+- Do not store images in IndexedDB until Module 6.
+- In this module, preview in memory only.
+- Validate file type and size.
+- Use object URLs carefully and revoke them when no longer needed.
+- Keep capture UI simple for field use.
 
 ## Deliverable
 
-User can capture or select an image from the browser.
+User can capture or select and preview an image.
 
 ## Acceptance Criteria
 
-- User can open camera where browser/device supports it.
-- User can select an existing image.
-- Image preview works.
-- User can cancel or save the photo.
+- User can select existing image.
+- User can open camera on supported mobile browser.
+- Preview works.
+- User can cancel selection.
+- App does not crash with unsupported file types.
+
+## Suggested Commit
+
+```text
+feat(photo): add image capture and selection workflow
+```
 
 ---
 
@@ -441,10 +807,14 @@ User can capture or select an image from the browser.
 
 Implement persistent browser storage for projects, photos, features, and settings.
 
+## Why This Module Matters
+
+Field data must survive refreshes, browser restarts, and temporary loss of network. IndexedDB is the core of the local-first architecture.
+
 ## Recommended Library
 
-```text
-Dexie.js
+```bash
+npm install dexie
 ```
 
 ## Initial Stores
@@ -457,93 +827,91 @@ geoFeatures
 appSettings
 ```
 
-## Projects Store
+## Development Steps
+
+### Step 6.1 — Create Database Schema
+
+Create `schema.ts` and `indexedDb.ts`.
+
+Initial tables:
 
 ```text
-projectId
-projectName
-createdAt
-updatedAt
-defaultLatitude
-defaultLongitude
-notes
+projects
+fieldPhotos
+kmzFiles
+geoFeatures
+appSettings
 ```
 
-## Field Photos Store
+### Step 6.2 — Create Storage Service
+
+Create `storageService.ts` with clean methods:
 
 ```text
-photoId
-projectId
+createProject
+getProjects
+savePhoto
+getPhotosByProject
+saveKmzFile
+saveGeoFeatures
+getFeaturesByProject
+getSettings
+saveSettings
+```
+
+### Step 6.3 — Add Database Versioning
+
+Use Dexie versioning from the start.
+
+Rules:
+
+```text
+Never casually delete stores
+Increment version when schema changes
+Document schema changes in README or changelog
+```
+
+### Step 6.4 — Store Photo Blobs
+
+Store:
+
+```text
 imageBlob
-thumbnailBlob
-fileName
-originalFileName
-mimeType
-latitude
-longitude
-altitude
-horizontalAccuracy
-verticalAccuracy
-headingDegreesAuto
-headingDegreesManual
-headingWasManuallyCorrected
-photoTakenAt
-photoSavedAt
-note
-nearestFeatureId
-nearestFeatureName
-imageWidth
-imageHeight
-browserName
-deviceInfo
-appVersion
+thumbnailBlob later
+metadata fields
 ```
 
-## KMZ Files Store
+### Step 6.5 — Add Basic Data Debug Page or Console Utility
 
-```text
-kmzFileId
-projectId
-fileName
-fileBlob
-importedAt
-featureCount
-```
+During development, create a temporary debug view or console helper to list database records.
 
-## Geo Features Store
+Remove or hide before production.
 
-```text
-featureId
-kmzFileId
-projectId
-featureName
-featureType
-geometryGeoJson
-propertiesJson
-styleJson
-description
-folderPath
-importedAt
-```
+## Optimal Development Notes
 
-## App Settings Store
-
-```text
-settingKey
-settingValue
-updatedAt
-```
+- Keep all database calls inside services.
+- Pages should not call Dexie directly.
+- Avoid storing huge uncompressed images if possible.
+- Consider generating smaller thumbnails in a later module.
+- Add error handling for browser storage quota issues.
 
 ## Deliverable
 
-A local persistent database.
+Local persistent database with project/photo/settings storage.
 
 ## Acceptance Criteria
 
-- Data persists after page refresh.
-- Photos are linked to projects.
-- Features are linked to imported KML/KMZ files.
-- Settings persist locally.
+- Data persists after refresh.
+- Settings can be read from database or migrated from localStorage.
+- Photos can be saved and retrieved.
+- Project records can be created and listed.
+- No direct Dexie calls from page components.
+
+## Suggested Commit
+
+```text
+feat(storage): add IndexedDB local database with Dexie
+```
 
 ---
 
@@ -552,6 +920,10 @@ A local persistent database.
 ## Goal
 
 Save complete metadata for every photo.
+
+## Why This Module Matters
+
+The photo is only useful if metadata is reliable, auditable, and exportable.
 
 ## Required Metadata
 
@@ -583,27 +955,74 @@ DeviceInfo
 AppVersion
 ```
 
-## Notes
+## Development Steps
 
-- Store metadata in IndexedDB.
-- Do not depend only on EXIF metadata.
-- Save decimal latitude/longitude.
-- Save automatic heading if available.
-- Always allow manual heading correction.
-- Preserve the original automatic heading even if manual correction is entered.
+### Step 7.1 — Create `FieldPhoto` Model
+
+Define all required fields, allowing nullable values where needed.
+
+### Step 7.2 — Create Photo Save Workflow
+
+When saving a photo:
+
+```text
+Generate PhotoId
+Capture current timestamp
+Attach selected image blob
+Attach current GPS if available
+Attach heading if available
+Attach user note
+Save to IndexedDB
+```
+
+### Step 7.3 — Read Image Dimensions
+
+Use browser image loading to determine:
+
+```text
+ImageWidth
+ImageHeight
+```
+
+### Step 7.4 — Add Metadata Panel
+
+Create `PhotoMetadataPanel.tsx` to display saved metadata.
+
+### Step 7.5 — Add Missing Data Flags
+
+If GPS, heading, or accuracy are missing, display clearly:
+
+```text
+Location not captured
+Heading not available
+Accuracy unknown
+```
+
+## Optimal Development Notes
+
+- Never overwrite `HeadingDegreesAuto` with manual correction.
+- Never overwrite original filename.
+- Store `PhotoSavedAt` separately from `PhotoTakenAt`.
+- Keep metadata display clear and field-friendly.
+- Do not depend only on EXIF.
 
 ## Deliverable
 
-Each saved photo has a full metadata record.
+Saved photos with complete metadata records.
 
 ## Acceptance Criteria
 
-- Photo location is saved.
-- Timestamp is saved.
-- Heading is saved when available.
-- Manual heading can be entered or edited.
-- Manual heading does not overwrite automatic heading.
-- Note can be added or edited.
+- Photo metadata persists after refresh.
+- Location is saved when available.
+- Missing location is handled gracefully.
+- Image dimensions are saved.
+- Metadata panel shows all key fields.
+
+## Suggested Commit
+
+```text
+feat(photo): persist full photo metadata
+```
 
 ---
 
@@ -611,38 +1030,90 @@ Each saved photo has a full metadata record.
 
 ## Goal
 
-Capture automatic heading when browser/device support allows it and allow manual correction.
+Capture automatic heading when supported and allow manual correction.
 
-## Tasks
+## Why This Module Matters
 
-- Create `headingService.ts`.
-- Attempt to read device heading/orientation.
-- Store automatic heading as `HeadingDegreesAuto`.
-- Add manual correction field as `HeadingDegreesManual`.
-- Add boolean flag `HeadingWasManuallyCorrected`.
-- Display heading arrow on map when heading exists.
+Field photos often need direction context. However, browser heading support can vary, so manual correction must be a first-class feature.
 
-## Heading Logic
+## Development Steps
+
+### Step 8.1 — Create `headingService.ts`
+
+The service should support:
+
+```text
+isHeadingSupported
+requestPermissionIfNeeded
+startHeadingWatch
+stopHeadingWatch
+getLatestHeading
+```
+
+### Step 8.2 — Capture Automatic Heading
+
+When the user saves a photo, attach latest heading if available:
+
+```text
+HeadingDegreesAuto
+```
+
+### Step 8.3 — Create `HeadingEditor.tsx`
+
+The editor should allow:
+
+```text
+manual heading entry from 0 to 360 degrees
+clear manual heading
+save correction
+```
+
+### Step 8.4 — Display Heading Used
+
+Define display logic:
 
 ```text
 If HeadingDegreesManual exists:
-    Use manual heading for display.
+    HeadingUsed = HeadingDegreesManual
 Else if HeadingDegreesAuto exists:
-    Use automatic heading for display.
+    HeadingUsed = HeadingDegreesAuto
 Else:
-    Show marker without direction arrow.
+    HeadingUsed = null
 ```
+
+### Step 8.5 — Add Validation
+
+Valid heading range:
+
+```text
+0 <= heading < 360
+```
+
+## Optimal Development Notes
+
+- Treat automatic heading as optional.
+- Always allow manual correction.
+- Keep automatic and manual heading fields separate.
+- Document browser/device limitations.
+- Test on actual phone.
 
 ## Deliverable
 
-Photo orientation can be saved and corrected.
+Photo heading can be captured, displayed, and corrected.
 
 ## Acceptance Criteria
 
-- Automatic heading is captured where possible.
-- User can manually correct heading.
-- Direction arrow uses manual heading when available.
-- Original automatic heading remains stored.
+- Automatic heading is saved when available.
+- User can manually enter heading.
+- Manual heading does not overwrite automatic heading.
+- Heading validation works.
+- Metadata panel shows both automatic and manual values.
+
+## Suggested Commit
+
+```text
+feat(heading): add automatic heading capture and manual correction
+```
 
 ---
 
@@ -650,27 +1121,75 @@ Photo orientation can be saved and corrected.
 
 ## Goal
 
-Display saved photos on the map.
+Display saved photos on the map with optional direction arrows.
 
-## Tasks
+## Why This Module Matters
 
-- Create `PhotoMarkerLayer` component.
-- Load saved photos from IndexedDB.
-- Display each photo as a marker.
-- Display direction arrow when heading exists.
-- Open `PhotoDetailPage` when marker is selected.
-- Show photo preview and metadata.
+This completes the first real field workflow: capture photo, save metadata, and see the photo on the map.
+
+## Development Steps
+
+### Step 9.1 — Create `PhotoMarkerLayer.tsx`
+
+The component should:
+
+```text
+load photos for active project
+create markers at photo coordinates
+skip or list photos without coordinates
+```
+
+### Step 9.2 — Add Marker Popup
+
+Popup should show:
+
+```text
+thumbnail or small preview
+photo timestamp
+note preview
+heading used
+open details button
+```
+
+### Step 9.3 — Add Direction Arrow
+
+If heading exists, show a small arrow or rotated marker.
+
+Use heading logic from Module 8.
+
+### Step 9.4 — Link to `PhotoDetailPage`
+
+Clicking a photo marker should open details.
+
+### Step 9.5 — Refresh Map After Save
+
+After saving a photo, the map should update without requiring page refresh.
+
+## Optimal Development Notes
+
+- Keep marker rendering separate from map initialization.
+- Do not store Leaflet objects in IndexedDB.
+- Store data only; generate map layers at runtime.
+- Use simple marker icons first.
+- Improve styling later.
 
 ## Deliverable
 
-Saved photos are visible on the map.
+Saved photos appear on the map.
 
 ## Acceptance Criteria
 
-- Every saved photo appears as a map marker.
-- Photo marker opens photo details.
-- Direction arrow displays when heading exists.
-- Manual heading correction updates map display.
+- Photos with coordinates appear as markers.
+- Photos without coordinates are handled gracefully.
+- Marker popup opens.
+- Photo detail page opens from marker.
+- Direction arrow appears when heading exists.
+
+## Suggested Commit
+
+```text
+feat(map): display saved photo markers and heading arrows
+```
 
 ---
 
@@ -679,6 +1198,10 @@ Saved photos are visible on the map.
 ## Goal
 
 Import KML/KMZ files and parse point, polyline, and polygon features.
+
+## Why This Module Matters
+
+Imported GIS features turn the app into a field navigation and inspection tool, not just a photo logger.
 
 ## Supported Geometry Types in MVP
 
@@ -699,28 +1222,84 @@ Time animations
 Complex nested style maps
 ```
 
-## Tasks
+## Development Steps
 
-- Create `kmzParserService.ts`.
-- Add file picker for `.kml` and `.kmz` files.
-- If `.kmz`, unzip using JSZip.
-- Extract main KML file.
-- Convert KML to GeoJSON.
-- Store features in IndexedDB.
-- Link features to current project.
+### Step 10.1 — Install Dependencies
+
+```bash
+npm install jszip @tmcw/togeojson
+```
+
+### Step 10.2 — Create `kmzParserService.ts`
+
+The service should support:
+
+```text
+parseKmlFile
+parseKmzFile
+extractKmlFromKmz
+convertKmlToGeoJson
+normalizeFeatureProperties
+```
+
+### Step 10.3 — Add File Import UI
+
+On `KmzImportPage`, add file picker:
+
+```text
+accept .kml,.kmz
+```
+
+### Step 10.4 — Parse and Validate
+
+Check:
+
+```text
+file extension
+file size
+whether KML exists inside KMZ
+whether GeoJSON has features
+```
+
+### Step 10.5 — Store Imported File and Features
+
+Save:
+
+```text
+original file blob
+imported file record
+parsed GeoJSON features
+feature count
+project ID
+```
+
+## Optimal Development Notes
+
+- Keep parsing isolated from map display.
+- Do not draw features directly from import page.
+- Store normalized GeoJSON in IndexedDB.
+- Warn user if unsupported KML elements are skipped.
+- Test with small sample KML before large KMZ.
 
 ## Deliverable
 
-Imported KML/KMZ features stored as GeoJSON.
+KML/KMZ files can be imported and converted to stored GeoJSON features.
 
 ## Acceptance Criteria
 
-- User can import `.kml` file.
-- User can import `.kmz` file.
+- User can import `.kml`.
+- User can import `.kmz`.
 - Points are parsed.
 - Polylines are parsed.
 - Polygons are parsed.
-- Features persist after page refresh.
+- Unsupported elements do not crash the app.
+- Feature count is shown after import.
+
+## Suggested Commit
+
+```text
+feat(kmz): import KML and KMZ files as GeoJSON features
+```
 
 ---
 
@@ -730,16 +1309,26 @@ Imported KML/KMZ features stored as GeoJSON.
 
 Draw imported KML/KMZ features on top of the selected basemap.
 
-## Tasks
+## Why This Module Matters
 
-- Create `FeatureLayer` component.
-- Load features from IndexedDB.
-- Display GeoJSON features on Leaflet map.
-- Style points, polylines, and polygons.
-- Add click/tap popups.
-- Preserve feature layers when switching basemaps.
+This module completes the GIS overlay workflow. Field users can now see project features, navigate to them, and collect photos around them.
 
-## Layer Order
+## Development Steps
+
+### Step 11.1 — Create `FeatureLayer.tsx`
+
+The component should:
+
+```text
+load features for active project
+render GeoJSON layer
+style geometry by type
+add popups
+```
+
+### Step 11.2 — Define Layer Order
+
+Use this order:
 
 ```text
 1. Basemap
@@ -750,17 +1339,57 @@ Draw imported KML/KMZ features on top of the selected basemap.
 6. Current GPS position
 ```
 
+### Step 11.3 — Style Features Simply
+
+Initial styles:
+
+```text
+Polygons: transparent fill, colored outline
+Polylines: colored line
+Points: simple marker or circle marker
+```
+
+### Step 11.4 — Add Feature Popup
+
+Popup should show:
+
+```text
+feature name
+geometry type
+description if available
+source KMZ/KML file
+```
+
+### Step 11.5 — Preserve Layers During Basemap Switch
+
+Basemap switching should only affect the basemap layer.
+
+## Optimal Development Notes
+
+- Use GeoJSON rendering rather than custom geometry conversion if possible.
+- Keep feature styling centralized.
+- Avoid loading all projects' features at once.
+- Watch performance with large KMZ files.
+- Add feature count display.
+
 ## Deliverable
 
 Imported GIS features are visible and selectable on the map.
 
 ## Acceptance Criteria
 
-- Points display as markers.
-- Polylines display as line features.
-- Polygons display as filled or outlined areas.
-- Feature popup shows feature name and description.
-- Features remain visible after switching basemaps.
+- Points display correctly.
+- Polylines display correctly.
+- Polygons display correctly.
+- Feature popups work.
+- Features remain visible after basemap switch.
+- Features persist after refresh.
+
+## Suggested Commit
+
+```text
+feat(map): render imported KML KMZ feature layers
+```
 
 ---
 
@@ -770,23 +1399,78 @@ Imported GIS features are visible and selectable on the map.
 
 Automatically associate each saved photo with the nearest imported feature.
 
-## Tasks
+## Why This Module Matters
 
-- Create nearest feature utility in `geoUtils.ts`.
-- Compare photo point against imported point, polyline, and polygon features.
-- Store nearest feature ID and name in photo metadata.
-- Display nearest feature on photo detail page.
-- Allow manual override later.
+This improves office review by connecting photos to nearby design/inspection features.
+
+## Development Steps
+
+### Step 12.1 — Create Geometry Utility Functions
+
+In `geoUtils.ts`, add utilities for:
+
+```text
+point-to-point distance
+point-to-polyline distance
+point-in-polygon check
+point-to-polygon distance or centroid fallback
+```
+
+### Step 12.2 — Define Association Rules
+
+Suggested rules:
+
+```text
+If photo is inside polygon: associate with polygon
+Else find nearest point/polyline/polygon
+Store nearest feature ID/name/type/distance
+```
+
+### Step 12.3 — Save Association During Photo Save
+
+When a photo is saved:
+
+```text
+load project features
+compute nearest feature
+save nearest feature fields in photo metadata
+```
+
+### Step 12.4 — Display on Photo Details
+
+Show:
+
+```text
+nearest feature name
+feature type
+distance
+manual override option later
+```
+
+## Optimal Development Notes
+
+- Keep distance calculations approximate at first.
+- For MVP, haversine distance is acceptable for point-to-point.
+- Avoid complex geodesic computations until needed.
+- Add clear behavior when no features exist.
+- Do not block photo save if association fails.
 
 ## Deliverable
 
-Photos are linked to nearby imported GIS features.
+Photos are automatically linked to nearby imported GIS features.
 
 ## Acceptance Criteria
 
-- New photos are assigned nearest feature when imported features exist.
-- Nearest feature name appears on photo details.
-- App handles no-feature case without error.
+- New photos receive nearest feature when features exist.
+- No-feature case does not error.
+- Nearest feature appears on photo detail page.
+- Association does not prevent saving a photo.
+
+## Suggested Commit
+
+```text
+feat(photo): associate photos with nearest imported feature
+```
 
 ---
 
@@ -796,14 +1480,71 @@ Photos are linked to nearby imported GIS features.
 
 Support multiple field projects.
 
-## Tasks
+## Why This Module Matters
 
-- Create project list page.
-- Create new project workflow.
-- Open existing project.
-- Delete project.
-- Store photos and imported features by project.
-- Show project summary.
+Field work should be organized by project. Photos, imported files, and settings need project-level separation.
+
+## Development Steps
+
+### Step 13.1 — Create Project Model
+
+Fields:
+
+```text
+ProjectId
+ProjectName
+CreatedAt
+UpdatedAt
+DefaultLatitude
+DefaultLongitude
+Notes
+```
+
+### Step 13.2 — Create Project Page
+
+Add:
+
+```text
+project list
+create project
+open project
+delete project
+project summary
+```
+
+### Step 13.3 — Active Project State
+
+The app should know the active project.
+
+Options:
+
+```text
+URL route param
+React context
+local setting for last active project
+```
+
+### Step 13.4 — Filter All Data by Project
+
+Photos, features, and imported files must be filtered by project.
+
+### Step 13.5 — Add Project Summary
+
+Show:
+
+```text
+photo count
+imported file count
+feature count
+last modified date
+```
+
+## Optimal Development Notes
+
+- Do not allow orphaned photos without a project after this module.
+- Keep project deletion safe; ask for confirmation.
+- Consider soft delete later.
+- Active project should be visible in the UI.
 
 ## Deliverable
 
@@ -811,11 +1552,17 @@ User can manage multiple projects.
 
 ## Acceptance Criteria
 
-- User can create a project.
-- User can open a project.
-- User can import KML/KMZ into a project.
-- User can save photos under a project.
+- User can create project.
+- User can open project.
+- User can save photos under active project.
+- User can import KML/KMZ under active project.
 - Projects remain separated.
+
+## Suggested Commit
+
+```text
+feat(projects): add multi-project workflow
+```
 
 ---
 
@@ -824,6 +1571,10 @@ User can manage multiple projects.
 ## Goal
 
 Export collected photo metadata to CSV for office review.
+
+## Why This Module Matters
+
+CSV is the simplest useful export. It allows quick review in Excel and integration into other workflows.
 
 ## CSV Fields
 
@@ -840,24 +1591,77 @@ PhotoTakenAt
 PhotoSavedAt
 Note
 NearestFeatureName
+NearestFeatureType
+NearestFeatureDistance
 ```
 
-## Tasks
+## Development Steps
 
-- Create `exportService.ts`.
-- Build CSV from IndexedDB photo records.
-- Download CSV from browser.
+### Step 14.1 — Create `exportService.ts`
+
+Add:
+
+```text
+buildPhotoCsv
+escapeCsvValue
+downloadTextFile
+```
+
+### Step 14.2 — Query Project Data
+
+Get:
+
+```text
+active project
+photos for active project
+nearest feature fields
+```
+
+### Step 14.3 — Build CSV Safely
+
+Handle:
+
+```text
+commas
+quotes
+line breaks
+null values
+dates
+```
+
+### Step 14.4 — Trigger Browser Download
+
+Filename example:
+
+```text
+FieldPhotoMapper_ProjectName_Photos_YYYYMMDD.csv
+```
+
+## Optimal Development Notes
+
+- Make CSV export work before KMZ/ZIP export.
+- Keep export logic independent of UI.
+- Include decimal latitude/longitude.
+- Include both automatic and manual heading.
+- Include `HeadingUsed` for convenience.
 
 ## Deliverable
 
-CSV export file.
+Downloadable CSV export.
 
 ## Acceptance Criteria
 
-- CSV downloads from browser.
+- CSV downloads successfully.
 - CSV opens in Excel.
-- Decimal latitude/longitude values are included.
-- Heading fields are included.
+- Rows match saved photos.
+- Special characters in notes do not break CSV.
+- Missing values are handled cleanly.
+
+## Suggested Commit
+
+```text
+feat(export): add CSV photo metadata export
+```
 
 ---
 
@@ -867,13 +1671,17 @@ CSV export file.
 
 Export field data in GIS-friendly and archive-friendly formats.
 
+## Why This Module Matters
+
+KMZ/ZIP exports make the collected field data easier to review in GIS tools, Google Earth, and project archives.
+
 ## KMZ Export Should Include
 
 ```text
 Photo point locations
-Photo direction arrows, if heading exists
+Photo direction arrows if heading exists
 Photo notes
-Links or references to image files
+References to image files
 Optional imported features
 ```
 
@@ -886,12 +1694,48 @@ Photos folder
 Metadata JSON
 ```
 
-## Tasks
+## Development Steps
 
-- Generate GeoJSON or KML from saved photos.
-- Package data using JSZip.
-- Include image blobs in export package.
-- Trigger browser download.
+### Step 15.1 — Generate Photo GeoJSON or KML
+
+Start with GeoJSON internally, then generate KML if needed.
+
+### Step 15.2 — Add Direction Arrows
+
+Represent direction arrows as short line features calculated from:
+
+```text
+photo location
+heading used
+fixed arrow length
+```
+
+### Step 15.3 — Package Files with JSZip
+
+Include:
+
+```text
+metadata CSV
+metadata JSON
+photos
+KML/KMZ output
+```
+
+### Step 15.4 — Trigger ZIP Download
+
+Filename example:
+
+```text
+FieldPhotoMapper_ProjectName_Export_YYYYMMDD.zip
+```
+
+## Optimal Development Notes
+
+- Do CSV first; reuse CSV in ZIP.
+- Keep images organized by folder.
+- Keep JSON export complete for machine-readable backup.
+- Do not assume every photo has coordinates.
+- Validate KMZ in Google Earth or GIS software.
 
 ## Deliverable
 
@@ -899,10 +1743,17 @@ Downloadable ZIP/KMZ package.
 
 ## Acceptance Criteria
 
-- ZIP contains CSV, KMZ, photos, and JSON metadata.
-- KMZ opens in Google Earth or compatible GIS software.
-- Photo locations are preserved.
-- Heading arrows are included where possible.
+- ZIP contains CSV, JSON, photos, and GIS output.
+- KMZ opens in compatible GIS software.
+- Photo point locations are correct.
+- Direction arrows appear where heading exists.
+- Export works for photos with and without heading.
+
+## Suggested Commit
+
+```text
+feat(export): add KMZ and ZIP field package export
+```
 
 ---
 
@@ -912,25 +1763,82 @@ Downloadable ZIP/KMZ package.
 
 Make the webapp installable and usable as a basic offline shell.
 
-## Tasks
+## Why This Module Matters
 
-- Add `manifest.webmanifest`.
-- Add app icons.
-- Add service worker.
-- Cache app shell files.
-- Allow app to open without network.
-- Keep IndexedDB data available offline.
+Field users benefit from app-like behavior, home screen launch, and offline availability of previously loaded app assets.
+
+## Development Steps
+
+### Step 16.1 — Add PWA Plugin
+
+```bash
+npm install -D vite-plugin-pwa
+```
+
+### Step 16.2 — Add Manifest
+
+Include:
+
+```text
+app name
+short name
+icons
+start URL
+display mode
+background color
+theme color
+```
+
+### Step 16.3 — Add Service Worker
+
+Cache:
+
+```text
+app shell
+static assets
+icons
+core CSS/JS
+```
+
+### Step 16.4 — Test Installability
+
+Test on:
+
+```text
+Android Chrome
+Android Edge
+Desktop Chrome
+```
+
+### Step 16.5 — Confirm IndexedDB Offline Data
+
+Previously saved data should remain visible offline.
+
+## Optimal Development Notes
+
+- Do not promise offline maps yet.
+- Offline shell is not the same as offline basemap.
+- Keep service worker config simple first.
+- Watch for stale cache during development.
+- Add visible app version number to help debug deployed builds.
 
 ## Deliverable
 
-Installable PWA.
+Installable PWA with offline app shell.
 
 ## Acceptance Criteria
 
 - Browser offers install option where supported.
 - Installed app opens from phone home screen.
-- App shell loads without internet.
-- Previously saved data remains available offline.
+- App shell loads offline.
+- IndexedDB data remains accessible offline.
+- User understands if basemap tiles are unavailable offline.
+
+## Suggested Commit
+
+```text
+feat(pwa): add installable offline app shell
+```
 
 ---
 
@@ -940,35 +1848,88 @@ Installable PWA.
 
 Support field use when internet access is poor or unavailable.
 
+## Why This Module Matters
+
+Offline app data is easy compared with offline basemaps. This module should come after the core workflow works.
+
 ## Possible Offline Map Approaches
 
 ```text
-Pre-cached OpenStreetMap tiles
-User-defined offline map areas
-MBTiles through a compatible web approach
-Static project basemap packages
+pre-cached OpenStreetMap tiles
+user-defined offline map areas
+static project basemap packages
+MBTiles-like workflow through compatible browser tooling
 ```
 
-## Notes
+## Development Steps
 
-Offline basemaps are more complex than offline app data. This module should be treated as a future phase after the core photo, GPS, KML/KMZ, and export workflow works.
+### Step 17.1 — Define Offline Map Requirements
+
+Decide:
+
+```text
+project area size
+zoom levels
+storage limit
+basemap source
+update frequency
+```
+
+### Step 17.2 — Prototype Tile Cache
+
+Start with a small test area and limited zoom range.
+
+### Step 17.3 — Add Offline Area Manager
+
+Allow user to:
+
+```text
+select area
+select zoom levels
+download/cache tiles
+delete cached tiles
+see cache size
+```
+
+### Step 17.4 — Add Offline Status
+
+Show:
+
+```text
+online/offline status
+basemap cache availability
+missing tile warning
+```
+
+## Optimal Development Notes
+
+- Do not include this in the first MVP.
+- Be careful with tile provider terms of use.
+- Keep cache sizes controlled.
+- Add user warning before large downloads.
+- Test storage limits on actual devices.
 
 ## Deliverable
 
-Offline map support.
+Offline map support for selected project areas.
 
 ## Acceptance Criteria
 
-- User can open project without internet.
+- User can open project offline.
 - Imported features remain visible offline.
 - Saved photos remain visible offline.
-- Basemap remains visible if offline tiles were prepared.
+- Cached basemap remains visible in selected areas.
+- App handles missing tiles gracefully.
+
+## Suggested Commit
+
+```text
+feat(offline): add offline basemap cache workflow
+```
 
 ---
 
-## 5. Recommended Build Order
-
-The recommended order is:
+## 7. Recommended Build Order
 
 ```text
 Module 0  - Web Project Setup
@@ -993,15 +1954,14 @@ Module 17 - Offline Maps, Future Phase
 
 ---
 
-## 6. MVP v0.1 Scope
+## 8. MVP Scopes
 
-The first working MVP should include:
+## MVP v0.1 — First Useful Field Workflow
 
 ```text
 React + TypeScript + Vite app
 Leaflet map
 OpenStreetMap basemap
-Settings page
 Current GPS position
 Take/select photo
 Save photo metadata locally
@@ -1012,26 +1972,19 @@ Show photo marker on map
 Open photo detail page
 ```
 
----
-
-## 7. MVP v0.2 Scope
-
-The second version should include:
+## MVP v0.2 — Robust Local Data and Heading
 
 ```text
 IndexedDB database with Dexie.js
-Automatic heading capture where browser supports it
+Automatic heading capture where supported
 Manual heading correction
 Photo direction arrows
+Settings page
 Google API key setting
 Google Satellite optional basemap
 ```
 
----
-
-## 8. MVP v0.3 Scope
-
-The third version should include:
+## MVP v0.3 — GIS Overlay Workflow
 
 ```text
 KML/KMZ import
@@ -1042,11 +1995,7 @@ Feature layer display
 Nearest feature association
 ```
 
----
-
-## 9. MVP v0.4 Scope
-
-The fourth version should include:
+## MVP v0.4 — Project and Export Workflow
 
 ```text
 Project management
@@ -1057,56 +2006,101 @@ Basic PWA install support
 Offline app shell
 ```
 
----
-
-## 10. Design Principles
-
-The app should follow these principles:
-
-- Build one module at a time.
-- Keep components small and reusable.
-- Keep map logic separate from UI pages.
-- Keep services independent.
-- Store all important metadata in IndexedDB.
-- Do not depend only on EXIF metadata.
-- Keep basemaps separate from overlays.
-- Keep imported features separate from photo markers.
-- Always preserve original automatic heading.
-- Always allow manual heading correction.
-- Use decimal latitude/longitude as the first coordinate format.
-- Add State Plane, UTM, or other coordinate systems later if needed.
-- Make OpenStreetMap the default free basemap.
-- Make Google Satellite optional and API-key based.
-- Treat offline maps as a future phase, not part of the first MVP.
-
----
-
-## 11. Initial Development Goal
-
-The first development goal is not a complete app.
-
-The first goal is:
+## Future v0.5 — Offline Map Workflow
 
 ```text
-Open webapp locally
-Open MapPage
-Show OpenStreetMap
-Show current GPS position
-Take or select a photo
-Save photo with decimal Lat/Lon
-Show photo marker on map
-Open photo detail page
-View metadata
-Edit heading manually
+Offline map area selection
+Tile cache management
+Offline basemap status
+Offline-first project package
 ```
-
-Once this workflow works, the app can grow into the KML/KMZ and GIS feature workflow.
 
 ---
 
-## 12. Suggested Initial Commands
+## 9. Testing Roadmap
 
-Create the project:
+## Desktop Browser Testing
+
+Use desktop browser for:
+
+```text
+routing
+map rendering
+settings
+IndexedDB
+KML/KMZ import
+exports
+basic UI debugging
+```
+
+## Mobile Browser Testing
+
+Use actual Android Chrome or Edge for:
+
+```text
+GPS
+camera capture
+file selection
+heading/orientation
+PWA install
+field usability
+storage behavior
+```
+
+## Field Testing Checklist
+
+Before considering the app field-ready, test:
+
+```text
+Can the user create/open a project?
+Can the user open the map outside office Wi-Fi?
+Can the user locate current GPS position?
+Can the user take/select photo?
+Does the photo save with coordinates?
+Does the marker appear in the correct location?
+Can heading be corrected manually?
+Can KML/KMZ features be imported?
+Can exported CSV open in Excel?
+Can exported ZIP preserve photos and metadata?
+```
+
+---
+
+## 10. Risk Register
+
+| Risk | Impact | Mitigation |
+|---|---:|---|
+| Browser heading support is inconsistent | High | Treat automatic heading as optional and manual heading as required |
+| Google Satellite API/key/billing complexity | Medium | Keep OpenStreetMap as default and Google Satellite optional |
+| Large photos exceed storage quota | High | Add image compression and thumbnails in future module |
+| Large KMZ files slow browser | Medium | Start with point/line/polygon only and warn on large files |
+| Offline maps are complex | High | Defer offline basemaps to future phase |
+| GPS permission denied | Medium | Allow photo save without location and clearly flag missing location |
+| Inconsistent mobile browser behavior | High | Test on real Android devices early |
+
+---
+
+## 11. Definition of Done
+
+A module is done only when:
+
+```text
+Code builds without TypeScript errors
+No critical console errors
+Feature works on desktop browser
+Mobile-specific feature works on Android Chrome or Edge
+Acceptance criteria are satisfied
+Data persists if persistence is required
+Errors are handled gracefully
+README or notes are updated if behavior changed
+Commit is clean and descriptive
+```
+
+---
+
+## 12. Initial Commands
+
+Create project:
 
 ```bash
 npm create vite@latest field-photo-mapper-web -- --template react-ts
@@ -1115,20 +2109,26 @@ npm install
 npm run dev
 ```
 
-Install initial map dependencies:
+Install router:
+
+```bash
+npm install react-router-dom
+```
+
+Install map dependencies:
 
 ```bash
 npm install leaflet react-leaflet
 npm install -D @types/leaflet
 ```
 
-Install storage and file-processing dependencies later:
+Install storage and KML/KMZ dependencies later:
 
 ```bash
 npm install dexie jszip @tmcw/togeojson
 ```
 
-Optional PWA plugin later:
+Install PWA dependency later:
 
 ```bash
 npm install -D vite-plugin-pwa
@@ -1136,33 +2136,7 @@ npm install -D vite-plugin-pwa
 
 ---
 
-## 13. Development Notes
-
-For field use, test on actual mobile browsers early.
-
-Recommended test targets:
-
-```text
-Android Chrome
-Android Edge
-iPhone Safari, optional later
-Desktop Chrome for debugging
-```
-
-Important browser features to validate early:
-
-```text
-Camera access
-Image file selection
-GPS permission
-Heading/orientation support
-IndexedDB storage capacity
-PWA install behavior
-```
-
----
-
-## 14. Current Decision Log
+## 13. Current Decision Log
 
 ```text
 App name: Field Photo Mapper
@@ -1176,5 +2150,122 @@ Coordinate display: Decimal Lat/Lon
 Photo metadata: Store full metadata locally
 Heading: Capture automatic if available, allow manual correction
 Local database: IndexedDB
+Storage wrapper: Dexie.js
 Initial deployment: Local development, later GitHub Pages or Azure Static Web Apps
+```
+
+---
+
+## 14. First Sprint Plan
+
+The first sprint should complete:
+
+```text
+Module 0 - Project setup
+Module 1 - Leaflet OpenStreetMap
+Module 2 - Settings page
+```
+
+Sprint goal:
+
+```text
+Open the app, navigate pages, open a map, and save basic settings.
+```
+
+Do not start GPS, camera, database, or KML/KMZ until the first sprint is stable.
+
+---
+
+## 15. Second Sprint Plan
+
+The second sprint should complete:
+
+```text
+Module 3 - Basemap switcher
+Module 4 - GPS location tracking
+Module 5 - Photo capture and image selection
+```
+
+Sprint goal:
+
+```text
+Open the map, show current GPS position, and capture/select a photo preview.
+```
+
+---
+
+## 16. Third Sprint Plan
+
+The third sprint should complete:
+
+```text
+Module 6 - IndexedDB
+Module 7 - Photo metadata
+Module 8 - Heading and orientation
+Module 9 - Photo markers on map
+```
+
+Sprint goal:
+
+```text
+Take/select a photo, save it locally with metadata, and see it on the map.
+```
+
+This is the first true MVP.
+
+---
+
+## 17. Fourth Sprint Plan
+
+The fourth sprint should complete:
+
+```text
+Module 10 - KML/KMZ import
+Module 11 - Feature layers
+Module 12 - Nearest feature association
+```
+
+Sprint goal:
+
+```text
+Import field features and associate photos with nearby GIS features.
+```
+
+---
+
+## 18. Fifth Sprint Plan
+
+The fifth sprint should complete:
+
+```text
+Module 13 - Project workflow
+Module 14 - CSV export
+Module 15 - KMZ/ZIP export
+Module 16 - PWA install/offline shell
+```
+
+Sprint goal:
+
+```text
+Organize field data by project and export a complete field package.
+```
+
+---
+
+## 19. Final North Star Workflow
+
+The final app should support this workflow:
+
+```text
+1. Open Field Photo Mapper Web
+2. Select or create a project
+3. Open map
+4. Import KML/KMZ features
+5. View current GPS position
+6. Navigate to field location
+7. Take/select photo
+8. Save photo with Lat/Lon, timestamp, heading, note, and nearest feature
+9. View photo marker and direction arrow on map
+10. Correct heading if needed
+11. Export CSV/KMZ/ZIP package for office review
 ```
