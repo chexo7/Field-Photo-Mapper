@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Field Photo Mapper">
+  <rect width="512" height="512" rx="112" fill="#0f5132"/>
+  <path d="M112 138c0-20 16-36 36-36h216c20 0 36 16 36 36v236c0 20-16 36-36 36H148c-20 0-36-16-36-36V138z" fill="#f8fbf7"/>
+  <path d="M152 167h208v145H152z" fill="#cfe8d6"/>
+  <path d="M152 284l61-64 46 44 38-34 63 54v28H152v-28z" fill="#2f8f62"/>
+  <circle cx="314" cy="208" r="25" fill="#f6a21a"/>
+  <path d="M256 120l42 78-42 166-42-166 42-78z" fill="#e85d2a"/>
+  <path d="M256 157l-22 84 22 52 22-52-22-84z" fill="#fff"/>
+</svg>

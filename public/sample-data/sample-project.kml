@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Sample Field Project</name>
+    <Placemark>
+      <name>Gate A</name>
+      <Point>
+        <coordinates>-95.3704,29.7601,0</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Inspection Line</name>
+      <LineString>
+        <coordinates>
+          -95.3720,29.7598,0 -95.3698,29.7610,0 -95.3688,29.7602,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Work Area</name>
+      <Polygon>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>
+              -95.3730,29.7589,0 -95.3678,29.7589,0 -95.3678,29.7620,0 -95.3730,29.7620,0 -95.3730,29.7589,0
+            </coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+  </Document>
+</kml>
