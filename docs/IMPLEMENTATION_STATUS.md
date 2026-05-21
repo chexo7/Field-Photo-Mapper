@@ -1,6 +1,6 @@
 # Field Photo Mapper Implementation Status
 
-Last updated: 2026-05-04
+Last updated: 2026-05-21
 
 ## Completed in this pass
 
@@ -16,12 +16,14 @@ Last updated: 2026-05-04
 - Device heading capture where supported, plus manual heading correction stored separately.
 - IndexedDB/Dexie storage for projects, photos, imported files, and GeoJSON features.
 - Photo detail page with metadata, heading edit, note edit, original image download, and delete.
-- Photo markers and heading arrows on the map.
+- Photo markers and Google-Maps-style vision cones on the map.
+- Map edit mode for selecting located photos and manually correcting each photo orientation.
 - KML/KMZ import using JSZip and `@tmcw/togeojson`.
 - Imported point, line, and polygon rendering with popups.
 - Approximate nearest-feature association for new located photos.
 - CSV export for photo metadata.
 - ZIP export containing CSV, metadata JSON, KML, KMZ, and locally saved image blobs.
+- Standalone HTML deliverable export as a ZIP containing `field-photo-map.html`, an `images/` folder, and metadata. The HTML can be opened by double-click, shows photo vision cones, supports edit mode, saves edits in browser storage, and can download an updated HTML file with those edits embedded.
 - PWA manifest/service-worker generation and offline app shell precache.
 - Sample KML file for quick import testing.
 
@@ -36,6 +38,7 @@ Last updated: 2026-05-04
 - KML/KMZ support focuses on standard point, polyline, and polygon features. Ground overlays, style fidelity, network links, very large KMZs, and complex nested documents need additional hardening.
 - Export validation in Google Earth/GIS tools still needs manual review with real project data.
 - Deployment target is not configured. The app can build locally; GitHub Pages, Azure Static Web Apps, or Vercel deployment can be added next.
+- A desktop `.exe` wrapper is optional future work. The current practical deliverable is browser-based: run the app, export the standalone HTML ZIP, extract it, and double-click `field-photo-map.html`. If a true desktop exporter is required later, Tauri or Electron can wrap the same export workflow.
 
 ## Suggested next validation pass
 
@@ -43,5 +46,5 @@ Last updated: 2026-05-04
 2. Create a project, import `public/sample-data/sample-project.kml`, locate GPS, capture a new photo, and upload an existing image.
 3. Confirm the uploaded-later image can be saved with manual coordinates and manual heading.
 4. Confirm markers, heading arrows, and imported features survive a browser refresh.
-5. Export CSV and ZIP, then inspect the CSV in Excel and the KMZ in Google Earth or a GIS viewer.
-
+5. Open the map, turn on orientation edit mode, select photos, adjust their vision cones, and save the manual headings.
+6. Export CSV, ZIP/KMZ, and HTML deliverable. Inspect the CSV in Excel, the KMZ in Google Earth or a GIS viewer, and the extracted `field-photo-map.html` by double-clicking it next to the `images/` folder.

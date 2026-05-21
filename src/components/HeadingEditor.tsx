@@ -13,7 +13,7 @@ export function HeadingEditor({
   onManualHeadingChange,
   disabled
 }: HeadingEditorProps) {
-  const autoLabel = typeof autoHeading === 'number' ? `${Math.round(autoHeading)}°` : 'Not captured';
+  const autoLabel = typeof autoHeading === 'number' ? `${Math.round(autoHeading)} deg` : 'Not captured';
 
   return (
     <div className="heading-editor">
@@ -45,4 +45,3 @@ export function HeadingEditor({
     </div>
   );
 }
-

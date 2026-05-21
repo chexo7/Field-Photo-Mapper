@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useActiveProject } from '../app/ActiveProjectContext';
 import type { FieldPhoto } from '../models/FieldPhoto';
 import type { GeoFeature } from '../models/GeoFeature';
-import { downloadCsv, downloadZipPackage } from '../services/exportService';
+import { downloadCsv, downloadHtmlDeliverable, downloadZipPackage } from '../services/exportService';
 import { getProjectFeatures, getProjectPhotos } from '../services/storageService';
 import { formatDateTime } from '../utils/dateUtils';
 
@@ -41,6 +41,14 @@ export function HomePage() {
     }
     await downloadZipPackage(activeProject, photos, features);
     setMessage('ZIP package export prepared.');
+  }
+
+  async function exportHtmlDeliverable() {
+    if (!activeProject) {
+      return;
+    }
+    await downloadHtmlDeliverable(activeProject, photos, features);
+    setMessage('HTML deliverable prepared. Extract the ZIP and double-click field-photo-map.html.');
   }
 
   return (
@@ -123,6 +131,13 @@ export function HomePage() {
             <span>Bundle CSV, JSON, KML/KMZ, and locally saved photos.</span>
           </div>
         </button>
+        <button className="workflow-row" type="button" onClick={() => void exportHtmlDeliverable()}>
+          <Download size={20} />
+          <div>
+            <strong>HTML deliverable</strong>
+            <span>Export a double-click map with images and editable vision cones.</span>
+          </div>
+        </button>
       </section>
 
       {message ? <p className="status-message">{message}</p> : null}
@@ -156,4 +171,3 @@ export function HomePage() {
     </div>
   );
 }
-

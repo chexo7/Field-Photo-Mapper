@@ -17,9 +17,23 @@ interface MapViewProps {
   currentLocation: LocationReading | null;
   photos: FieldPhoto[];
   features: GeoFeature[];
+  selectedPhotoId?: string;
+  selectedHeadingPreview?: number;
+  orientationEditMode?: boolean;
+  onPhotoSelect?: (photo: FieldPhoto) => void;
 }
 
-export function MapView({ project, selectedBasemap, currentLocation, photos, features }: MapViewProps) {
+export function MapView({
+  project,
+  selectedBasemap,
+  currentLocation,
+  photos,
+  features,
+  selectedPhotoId,
+  selectedHeadingPreview,
+  orientationEditMode,
+  onPhotoSelect
+}: MapViewProps) {
   const settings = getSettings();
   const basemap = resolveBasemap(settings, selectedBasemap);
   const center: [number, number] = [project.defaultLatitude, project.defaultLongitude];
@@ -28,7 +42,13 @@ export function MapView({ project, selectedBasemap, currentLocation, photos, fea
     <MapContainer center={center} zoom={15} className="map-container" scrollWheelZoom>
       <TileLayer attribution={basemap.attribution} url={basemap.tileUrl ?? 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'} />
       <FeatureLayer features={features} />
-      <PhotoMarkerLayer photos={photos} />
+      <PhotoMarkerLayer
+        photos={photos}
+        selectedPhotoId={selectedPhotoId}
+        selectedHeadingPreview={selectedHeadingPreview}
+        orientationEditMode={orientationEditMode}
+        onPhotoSelect={onPhotoSelect}
+      />
       <CurrentLocationMarker location={currentLocation} />
       <MapFocus project={project} currentLocation={currentLocation} photos={photos} features={features} />
     </MapContainer>
@@ -64,4 +84,3 @@ function MapFocus({
 
   return null;
 }
-

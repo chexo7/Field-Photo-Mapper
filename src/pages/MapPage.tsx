@@ -1,4 +1,4 @@
-import { Crosshair, LocateFixed, PauseCircle, PlayCircle, RefreshCw } from 'lucide-react';
+import { Compass, Crosshair, Download, LocateFixed, PauseCircle, PlayCircle, RefreshCw, Save } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useActiveProject } from '../app/ActiveProjectContext';
@@ -8,6 +8,7 @@ import type { BasemapId } from '../models/AppSettings';
 import type { FieldPhoto } from '../models/FieldPhoto';
 import type { GeoFeature } from '../models/GeoFeature';
 import { countFeatures } from '../services/featureLayerService';
+import { downloadHtmlDeliverable } from '../services/exportService';
 import {
   clearWatch,
   getCurrentPosition,
@@ -16,7 +17,7 @@ import {
   type LocationReading
 } from '../services/locationService';
 import { getSettings } from '../services/settingsService';
-import { getProjectFeatures, getProjectPhotos } from '../services/storageService';
+import { getProjectFeatures, getProjectPhotos, updatePhoto } from '../services/storageService';
 
 export function MapPage() {
   const { activeProject, refreshProjects } = useActiveProject();
@@ -26,6 +27,9 @@ export function MapPage() {
   const [message, setMessage] = useState('');
   const [selectedBasemap, setSelectedBasemap] = useState<BasemapId>(getSettings().defaultBasemap);
   const [isTracking, setIsTracking] = useState(false);
+  const [orientationEditMode, setOrientationEditMode] = useState(false);
+  const [selectedPhotoId, setSelectedPhotoId] = useState<string | undefined>();
+  const [headingDraft, setHeadingDraft] = useState(0);
   const watchIdRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -86,11 +90,55 @@ export function MapPage() {
     setMessage('Live tracking stopped.');
   }
 
+  function selectPhotoForOrientation(photo: FieldPhoto) {
+    setSelectedPhotoId(photo.id);
+    setHeadingDraft(Math.round(photo.headingUsed ?? photo.headingDegreesManual ?? photo.headingDegreesAuto ?? 0));
+  }
+
+  async function saveOrientation() {
+    const selectedPhoto = photos.find((photo) => photo.id === selectedPhotoId);
+    if (!selectedPhoto) {
+      setMessage('Select a located photo before saving orientation.');
+      return;
+    }
+
+    const normalizedHeading = ((headingDraft % 360) + 360) % 360;
+    await updatePhoto(selectedPhoto.id, {
+      headingDegreesManual: normalizedHeading,
+      headingUsed: normalizedHeading
+    });
+    setPhotos((currentPhotos) =>
+      currentPhotos.map((photo) =>
+        photo.id === selectedPhoto.id
+          ? {
+              ...photo,
+              headingDegreesManual: normalizedHeading,
+              headingUsed: normalizedHeading,
+              updatedAt: new Date().toISOString()
+            }
+          : photo
+      )
+    );
+    await refreshProjects();
+    setMessage(`Orientation saved for ${selectedPhoto.fileName}.`);
+  }
+
+  async function exportHtmlDeliverable() {
+    if (!activeProject) {
+      return;
+    }
+    await downloadHtmlDeliverable(activeProject, photos, features);
+    setMessage('HTML deliverable prepared. Extract the ZIP and double-click field-photo-map.html.');
+  }
+
   if (!activeProject) {
     return <div className="empty-state">Loading map project...</div>;
   }
 
   const featureCounts = countFeatures(features);
+  const locatedPhotos = photos.filter((photo) => !photo.locationMissing);
+  const selectedPhoto = photos.find((photo) => photo.id === selectedPhotoId);
+  const visiblePhotos = orientationEditMode ? photos : photos.slice(0, 5);
 
   return (
     <div className="map-page-grid">
@@ -126,6 +174,10 @@ export function MapPage() {
           currentLocation={location}
           photos={photos}
           features={features}
+          selectedPhotoId={selectedPhotoId}
+          selectedHeadingPreview={headingDraft}
+          orientationEditMode={orientationEditMode}
+          onPhotoSelect={selectPhotoForOrientation}
         />
       </section>
 
@@ -161,18 +213,106 @@ export function MapPage() {
           <Link className="button secondary full-width" to="/import">
             Import KML/KMZ
           </Link>
+          <button
+            className={`button ${orientationEditMode ? 'primary' : 'secondary'} full-width`}
+            type="button"
+            onClick={() => {
+              const nextMode = !orientationEditMode;
+              setOrientationEditMode(nextMode);
+              if (nextMode && !selectedPhotoId && locatedPhotos[0]) {
+                selectPhotoForOrientation(locatedPhotos[0]);
+              }
+            }}
+          >
+            <Compass size={18} />
+            {orientationEditMode ? 'Editing orientation' : 'Edit orientation'}
+          </button>
+          <button className="button secondary full-width" type="button" onClick={() => void exportHtmlDeliverable()}>
+            <Download size={18} />
+            Export HTML deliverable
+          </button>
         </div>
 
-        <div className="map-list-block">
-          <h3>Latest photos</h3>
-          <div className="data-list compact-list">
-            {photos.slice(0, 5).map((photo) => (
-              <Link key={photo.id} className="data-row" to={`/photos/${photo.id}`}>
-                <div>
-                  <strong>{photo.fileName}</strong>
-                  <span>{photo.locationMissing ? 'Missing location' : `${photo.latitude?.toFixed(5)}, ${photo.longitude?.toFixed(5)}`}</span>
+        {orientationEditMode ? (
+          <div className="orientation-editor">
+            <div className="section-title-row">
+              <Compass size={18} />
+              <h3>Vision cone</h3>
+            </div>
+            {selectedPhoto ? (
+              <>
+                <p className="orientation-photo-name">{selectedPhoto.fileName}</p>
+                <label className="field-control">
+                  <span>Heading degrees</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="359"
+                    value={headingDraft}
+                    onChange={(event) => setHeadingDraft(Number(event.target.value))}
+                  />
+                </label>
+                <label className="field-control">
+                  <span>Manual value</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="359"
+                    step="1"
+                    value={headingDraft}
+                    onChange={(event) => setHeadingDraft(Number(event.target.value))}
+                  />
+                </label>
+                <div className="orientation-compass" aria-label={`Heading ${headingDraft} degrees`}>
+                  <span style={{ transform: `rotate(${headingDraft}deg)` }} />
+                  <strong>{Math.round(((headingDraft % 360) + 360) % 360)} deg</strong>
                 </div>
-              </Link>
+                <button className="button primary full-width" type="button" onClick={() => void saveOrientation()}>
+                  <Save size={18} />
+                  Save orientation
+                </button>
+              </>
+            ) : (
+              <p className="subtle-text">No located photo is selected.</p>
+            )}
+          </div>
+        ) : null}
+
+        <div className="map-list-block">
+          <h3>{orientationEditMode ? 'All photos' : 'Latest photos'}</h3>
+          <div className="data-list compact-list">
+            {visiblePhotos.map((photo) => (
+              orientationEditMode ? (
+                <button
+                  key={photo.id}
+                  className={`data-row selectable-row ${photo.id === selectedPhotoId ? 'selected' : ''}`}
+                  type="button"
+                  disabled={photo.locationMissing}
+                  onClick={() => selectPhotoForOrientation(photo)}
+                >
+                  <div>
+                    <strong>{photo.fileName}</strong>
+                    <span>
+                      {photo.locationMissing
+                        ? 'Missing location'
+                        : `${photo.latitude?.toFixed(5)}, ${photo.longitude?.toFixed(5)} - ${
+                            Math.round(photo.headingUsed ?? 0)
+                          } deg`}
+                    </span>
+                  </div>
+                </button>
+              ) : (
+                <Link key={photo.id} className="data-row" to={`/photos/${photo.id}`}>
+                  <div>
+                    <strong>{photo.fileName}</strong>
+                    <span>
+                      {photo.locationMissing
+                        ? 'Missing location'
+                        : `${photo.latitude?.toFixed(5)}, ${photo.longitude?.toFixed(5)}`}
+                    </span>
+                  </div>
+                </Link>
+              )
             ))}
             {photos.length === 0 ? <p className="subtle-text">No photo markers yet.</p> : null}
           </div>
@@ -181,4 +321,3 @@ export function MapPage() {
     </div>
   );
 }
-

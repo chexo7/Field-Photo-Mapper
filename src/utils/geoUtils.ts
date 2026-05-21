@@ -75,6 +75,25 @@ export function destinationPoint(origin: LatLon, headingDegrees: number, distanc
   };
 }
 
+export function buildVisionConeLatLngs(
+  origin: LatLon,
+  headingDegrees: number,
+  distanceMeters = 38,
+  fieldOfViewDegrees = 58,
+  steps = 12
+): [number, number][] {
+  const halfField = fieldOfViewDegrees / 2;
+  const arcPoints: [number, number][] = [];
+
+  for (let index = 0; index <= steps; index += 1) {
+    const offset = -halfField + (fieldOfViewDegrees * index) / steps;
+    const point = destinationPoint(origin, headingDegrees + offset, distanceMeters);
+    arcPoints.push([point.latitude, point.longitude]);
+  }
+
+  return [[origin.latitude, origin.longitude], ...arcPoints, [origin.latitude, origin.longitude]];
+}
+
 export function distanceToGeometryMeters(point: LatLon, geometry: Geometry): number {
   switch (geometry.type) {
     case 'Point':
@@ -251,4 +270,3 @@ function toRadians(degrees: number): number {
 function toDegrees(radians: number): number {
   return (radians * 180) / Math.PI;
 }
-

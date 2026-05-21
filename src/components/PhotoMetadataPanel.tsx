@@ -33,7 +33,7 @@ export function PhotoMetadataPanel({ photo }: PhotoMetadataPanelProps) {
       </div>
       <div>
         <dt>Heading used</dt>
-        <dd>{typeof photo.headingUsed === 'number' ? `${Math.round(photo.headingUsed)}°` : 'Not recorded'}</dd>
+        <dd>{typeof photo.headingUsed === 'number' ? `${Math.round(photo.headingUsed)} deg` : 'Not recorded'}</dd>
       </div>
       <div>
         <dt>Saved</dt>
@@ -71,4 +71,3 @@ export function PhotoMetadataPanel({ photo }: PhotoMetadataPanelProps) {
     </dl>
   );
 }
-
